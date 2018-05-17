@@ -6,7 +6,7 @@
         width: 500
     };
 
-    function DoubleSelectBox(element, options) {
+    function DoubleSelectBox (element, options) {
         this.element = $(element);
         this.settings = $.extend({}, defaults, options);
         this._defaults = defaults;
@@ -14,7 +14,21 @@
         this.init();
     }
 
-    function bindEvents() {
+    function refreshSelect (dualSelectBox) {
+        dualSelectBox.selectedElements = 0;
+        dualSelectBox.elements.select1.empty();
+        dualSelectBox.elements.select2.empty();
+        dualSelectBox.element.find("option").each(function () {
+            if ($(this).prop("selected")) {
+                dualSelectBox.selectedElements ++;
+                dualSelectBox.elements.select2.append($(this).clone(true).prop("selected", false));
+            } else {
+                dualSelectBox.elements.select1.append($(this).clone(true).prop("selected", false));
+            }
+        });
+    }
+
+    function bindEvents () {
 
     }
 
@@ -49,8 +63,8 @@
             this.container.css("width", this.settings.width);
             this.element.hide();
             return this.element;
-        }, test: function () {
-
+        }, refresh: function () {
+            refreshSelect(this);
         }
     };
 
@@ -97,6 +111,26 @@
 }(this, function(window, $, undefined) {
     $.fn.doubleSelect = function (options) {
         var box = this.doubleSelectBox(options);
+        var items = "";
+        box.selectElement = function () {
+            if (options.unselectedList != null) {
+                for (var i in options.unselectedList) {
+                    if (options.unselectedList.hasOwnProperty(i)) {
+                       items += '<option value ="' + options.unselectedList[i][options.optionValue] + '">' + options.unselectedList[i][options.optionText] + '</option>';
+                    }
+                }
+            }
+            if (options.selectedList != null) {
+                for (var i in options.selectedList) {
+                    if (options.selectedList.hasOwnProperty(i)) {
+                        items += '<option value ="' + options.selectedList[i][options.optionValue] + '" selected>' + options.selectedList[i][options.optionText] + '</option>';
+                    }
+                }
+            }
+            box.append(items);
+            box.doubleSelectBox("refresh")
+        };
+        box.selectElement();
         return box;
     }
 }));

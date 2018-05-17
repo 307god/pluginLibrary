@@ -10,13 +10,18 @@
 </head>
 <body>
 
-<select class="plugin"></select>
+<select multiple="multiple" class="plugin"></select>
 
 </body>
 
 <script>
     $(function () {
-        $(".plugin").doubleSelectBox({});
+        $(".plugin").doubleSelect({
+            selectedList: [{"roleId":"1","roleName":"zhangsan"},{"roleId":"2","roleName":"lisi"},{"roleId":"3","roleName":"wangwu"}],
+            unselectedList: [{"roleId":"4","roleName":"zhangsan1"},{"roleId":"5","roleName":"lisi1"},{"roleId":"6","roleName":"wangwu1"}],
+            optionValue: "roleId",
+            optionText: "roleName"
+        });
     })
 </script>
 
