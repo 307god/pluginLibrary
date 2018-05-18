@@ -14,22 +14,54 @@
         this.init();
     }
 
+    function updateSelectionStates(dualSelectBox) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            if (typeof ($item.data("original-index")) === "undefined") {
+                $item.data("original-index", dualSelectBox.elementCount++)
+            }
+            if (typeof ($item.data("_selected")) === "undefined") {
+                $item.data("_selected", false);
+            }
+        })
+    }
+    
+    function changeSelectionState (dualSelectBox, original_index, selected) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            if ($item.data("original-index") === original_index) {
+                $item.prop("selected", selected);
+            }
+        })
+    }
+    
     function refreshSelect (dualSelectBox) {
         dualSelectBox.selectedElements = 0;
         dualSelectBox.elements.select1.empty();
         dualSelectBox.elements.select2.empty();
-        dualSelectBox.element.find("option").each(function () {
-            if ($(this).prop("selected")) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            if ($item.prop("selected")) {
                 dualSelectBox.selectedElements ++;
-                dualSelectBox.elements.select2.append($(this).clone(true).prop("selected", false));
+                dualSelectBox.elements.select2.append($item.clone(true).prop("selected", $item.data("_selected")));
             } else {
-                dualSelectBox.elements.select1.append($(this).clone(true).prop("selected", false));
+                dualSelectBox.elements.select1.append($item.clone(true).prop("selected", $item.data("_selected")));
             }
         });
     }
 
-    function bindEvents () {
+    function move (dualSelectBox) {
+        dualSelectBox.elements.select1.find("option:selected").each(function (index, item) {
+            var $item = $(item);
+            changeSelectionState(dualSelectBox, $item.data("original-index"), true);
+        });
+        refreshSelect(dualSelectBox);
+    }
 
+    function bindEvents (dualSelectBox) {
+        dualSelectBox.elements.moveButton.on("click", function () {
+            move(dualSelectBox);
+        })
     }
 
     DoubleSelectBox.prototype = {
@@ -58,12 +90,15 @@
                 removeButton: $(".p-remove", this.container),
                 removeAllButton: $(".p-removeAll", this.container)
             };
+            this.elementCount = 0;
             this.elements.select1.attr("size", this.settings.selectSize);
             this.elements.select2.attr("size", this.settings.selectSize);
             this.container.css("width", this.settings.width);
             this.element.hide();
+            bindEvents(this);
             return this.element;
         }, refresh: function () {
+            updateSelectionStates(this);
             refreshSelect(this);
         }
     };
@@ -113,17 +148,17 @@
         var box = this.doubleSelectBox(options);
         var items = "";
         box.selectElement = function () {
-            if (options.unselectedList != null) {
-                for (var i in options.unselectedList) {
-                    if (options.unselectedList.hasOwnProperty(i)) {
-                       items += '<option value ="' + options.unselectedList[i][options.optionValue] + '">' + options.unselectedList[i][options.optionText] + '</option>';
-                    }
-                }
-            }
             if (options.selectedList != null) {
                 for (var i in options.selectedList) {
                     if (options.selectedList.hasOwnProperty(i)) {
                         items += '<option value ="' + options.selectedList[i][options.optionValue] + '" selected>' + options.selectedList[i][options.optionText] + '</option>';
+                    }
+                }
+            }
+            if (options.unselectedList != null) {
+                for (var i in options.unselectedList) {
+                    if (options.unselectedList.hasOwnProperty(i)) {
+                        items += '<option value ="' + options.unselectedList[i][options.optionValue] + '">' + options.unselectedList[i][options.optionText] + '</option>';
                     }
                 }
             }
