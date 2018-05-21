@@ -2,8 +2,12 @@
     var pluginName = "doubleSelectBox", defaults = {
         // selectedListLabel: false,
         // unselectedListLabel: false,
+        showFilterInputs: true,
         selectSize: 8,
-        width: 500
+        width: 500,
+        css: {
+            filterInputBottom: "5px"
+        }
     };
 
     function DoubleSelectBox (element, options) {
@@ -35,7 +39,7 @@
         })
     }
     
-    function refreshSelect (dualSelectBox) {
+    function refreshSelects (dualSelectBox) {
         dualSelectBox.selectedElements = 0;
         dualSelectBox.elements.select1.empty();
         dualSelectBox.elements.select2.empty();
@@ -55,7 +59,7 @@
             var $item = $(item);
             changeSelectionState(dualSelectBox, $item.data("original-index"), true);
         });
-        refreshSelect(dualSelectBox);
+        refreshSelects(dualSelectBox);
     }
 
     function remove (dualSelectBox) {
@@ -63,7 +67,7 @@
             var $item = $(item);
             changeSelectionState(dualSelectBox, $item.data("original-index"), false);
         });
-        refreshSelect(dualSelectBox);
+        refreshSelects(dualSelectBox);
     }
     
     function moveAll (dualSelectBox) {
@@ -71,7 +75,7 @@
             var $item = $(item);
             $item.prop("selected", true);
         });
-        refreshSelect(dualSelectBox);
+        refreshSelects(dualSelectBox);
     }
     
     function removeAll (dualSelectBox) {
@@ -79,7 +83,7 @@
             var $item = $(item);
             $item.prop("selected", false);
         });
-        refreshSelect(dualSelectBox);
+        refreshSelects(dualSelectBox);
     }
 
     function bindEvents (dualSelectBox) {
@@ -102,6 +106,7 @@
             this.container = $("" +
                 '<div class="row p-container">' +
                     '<div class="col-xs-5 p-box1">' +
+                        '<input class="form-control filter" type="text" placeholder="Filter">' +
                         '<select name="from" class="form-control" multiple="multiple"></select>' +
                     '</div>' +
                     '<div class="col-xs-2 btn-group-vertical">' +
@@ -111,11 +116,15 @@
                         '<button type="button" class="btn btn-primary p-removeAll"><i class="glyphicon glyphicon-backward"></i></button>' +
                     '</div>' +
                     '<div class="col-xs-5 p-box2">' +
+                        '<input class="form-control filter" type="text" placeholder="Filter">' +
                         '<select name="from" class="form-control" multiple="multiple"></select>' +
                     '</div>' +
                 '</div>'
             ).insertBefore(this.element);
             this.elements = {
+                filterInput: $(".filter", this.container),
+                filterInput1: $(".p-box1 .filter", this.container),
+                filterInput2: $(".p-box2 .filter", this.container),
                 select1: $(".p-box1 select", this.container),
                 select2: $(".p-box2 select", this.container),
                 moveButton: $(".p-move", this.container),
@@ -127,12 +136,24 @@
             this.elements.select1.attr("size", this.settings.selectSize);
             this.elements.select2.attr("size", this.settings.selectSize);
             this.container.css("width", this.settings.width);
+            this.elements.filterInput.css("margin-bottom", this.settings.css.filterInputBottom);
+            this.setShowFilterInputs(this.settings.showFilterInputs);
             this.element.hide();
             bindEvents(this);
             return this.element;
+        }, setShowFilterInputs: function (value, refresh) {
+            if (!value) {
+                this.elements.filterInput.hide();
+            } else {
+                this.elements.filterInput.show();
+            }
+            this.settings.showFilterInputs = value;
+            if (refresh) {
+                refreshSelects(this);
+            }
         }, refresh: function () {
             updateSelectionStates(this);
-            refreshSelect(this);
+            refreshSelects(this);
         }
     };
 
