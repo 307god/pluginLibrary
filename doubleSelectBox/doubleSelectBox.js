@@ -58,9 +58,42 @@
         refreshSelect(dualSelectBox);
     }
 
+    function remove (dualSelectBox) {
+        dualSelectBox.elements.select2.find("option:selected").each(function (index, item) {
+            var $item = $(item);
+            changeSelectionState(dualSelectBox, $item.data("original-index"), false);
+        });
+        refreshSelect(dualSelectBox);
+    }
+    
+    function moveAll (dualSelectBox) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            $item.prop("selected", true);
+        });
+        refreshSelect(dualSelectBox);
+    }
+    
+    function removeAll (dualSelectBox) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            $item.prop("selected", false);
+        });
+        refreshSelect(dualSelectBox);
+    }
+
     function bindEvents (dualSelectBox) {
         dualSelectBox.elements.moveButton.on("click", function () {
             move(dualSelectBox);
+        });
+        dualSelectBox.elements.removeButton.on("click", function () {
+            remove(dualSelectBox);
+        });
+        dualSelectBox.elements.moveAllButton.on("click", function () {
+            moveAll(dualSelectBox);
+        });
+        dualSelectBox.elements.removeAllButton.on("click", function () {
+            removeAll(dualSelectBox);
         })
     }
 
