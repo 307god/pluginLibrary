@@ -18,7 +18,11 @@
         this.init();
     }
 
-    function updateSelectionStates(dualSelectBox) {
+    /**
+     * 初始化selection状态
+     * @param dualSelectBox
+     */
+    function updateSelectionStates (dualSelectBox) {
         dualSelectBox.element.find("option").each(function (index, item) {
             var $item = $(item);
             if (typeof ($item.data("original-index")) === "undefined") {
@@ -29,7 +33,13 @@
             }
         })
     }
-    
+
+    /**
+     * 保存一个selection状态
+     * @param dualSelectBox
+     * @param original_index
+     * @param selected
+     */
     function changeSelectionState (dualSelectBox, original_index, selected) {
         dualSelectBox.element.find("option").each(function (index, item) {
             var $item = $(item);
@@ -38,7 +48,23 @@
             }
         })
     }
-    
+
+    /**
+     * 保存一边selection状态
+     * @param dualSelectBox
+     * @param selectIndex
+     */
+    function saveSelections (dualSelectBox, selectIndex) {
+        dualSelectBox.elements["select" + selectIndex]. find("option").each(function (index, item) {
+            var $item = $(item);
+            dualSelectBox.element.find("option").eq($item.data("original-index")).data("_selected", $item.prop("selected"))
+        })
+    }
+
+    /**
+     * 刷新selection
+     * @param dualSelectBox
+     */
     function refreshSelects (dualSelectBox) {
         dualSelectBox.selectedElements = 0;
         dualSelectBox.elements.select1.empty();
@@ -52,40 +78,100 @@
                 dualSelectBox.elements.select1.append($item.clone(true).prop("selected", $item.data("_selected")));
             }
         });
+        if (dualSelectBox.settings.showFilterInputs) {
+            filter(dualSelectBox, 1);
+            filter(dualSelectBox, 2);
+        }
     }
 
+    /**
+     * 一边selection过滤
+     * @param dualSelectBox
+     * @param selectIndex
+     */
+    function filter (dualSelectBox, selectIndex) {
+        if (!dualSelectBox.settings.showFilterInputs) {
+            return;
+        }
+        saveSelections(dualSelectBox, selectIndex);
+        dualSelectBox.elements["select" + selectIndex].empty().scrollTop(0);
+        var regex = new RegExp($.trim(dualSelectBox.elements["filterInput" + selectIndex].val()), "gi"),
+           options = dualSelectBox.element;
+        if (selectIndex === 1) {
+            options = options.find("option").not(":selected");
+        } else {
+            options = options.find("option:selected");
+        }
+        options.each(function (index, item) {
+            var $item = $(item), isFiltered = true;
+            if (item.text.match(regex)) {
+                isFiltered = false;
+                dualSelectBox.elements["select" + selectIndex].append($item.clone(true).prop("selected", $item.data("_selected")));
+            }
+            dualSelectBox.element.find("option").eq($item.data("original-index")).data("filtered" + selectIndex, isFiltered);
+        });
+    }
+
+    /**
+     * 从左到右移动一个selection
+     * @param dualSelectBox
+     */
     function move (dualSelectBox) {
         dualSelectBox.elements.select1.find("option:selected").each(function (index, item) {
             var $item = $(item);
-            changeSelectionState(dualSelectBox, $item.data("original-index"), true);
+            if (!$item.data("filtered1")) {
+                changeSelectionState(dualSelectBox, $item.data("original-index"), true);
+            }
         });
         refreshSelects(dualSelectBox);
     }
 
+    /**
+     * 从右到左移动一个selection
+     * @param dualSelectBox
+     */
     function remove (dualSelectBox) {
         dualSelectBox.elements.select2.find("option:selected").each(function (index, item) {
             var $item = $(item);
-            changeSelectionState(dualSelectBox, $item.data("original-index"), false);
-        });
-        refreshSelects(dualSelectBox);
-    }
-    
-    function moveAll (dualSelectBox) {
-        dualSelectBox.element.find("option").each(function (index, item) {
-            var $item = $(item);
-            $item.prop("selected", true);
-        });
-        refreshSelects(dualSelectBox);
-    }
-    
-    function removeAll (dualSelectBox) {
-        dualSelectBox.element.find("option").each(function (index, item) {
-            var $item = $(item);
-            $item.prop("selected", false);
+            if (!$item.data("filtered2")) {
+                changeSelectionState(dualSelectBox, $item.data("original-index"), false);
+            }
         });
         refreshSelects(dualSelectBox);
     }
 
+    /**
+     * 从左到右移动一边selection
+     * @param dualSelectBox
+     */
+    function moveAll (dualSelectBox) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            if (!$item.data("filtered1")) {
+                $item.prop("selected", true);
+            }
+        });
+        refreshSelects(dualSelectBox);
+    }
+
+    /**
+     * 从右到左移动一边selection
+     * @param dualSelectBox
+     */
+    function removeAll (dualSelectBox) {
+        dualSelectBox.element.find("option").each(function (index, item) {
+            var $item = $(item);
+            if (!$item.data("filtered2")) {
+                $item.prop("selected", false);
+            }
+        });
+        refreshSelects(dualSelectBox);
+    }
+
+    /**
+     * 绑定事件
+     * @param dualSelectBox
+     */
     function bindEvents (dualSelectBox) {
         dualSelectBox.elements.moveButton.on("click", function () {
             move(dualSelectBox);
@@ -98,10 +184,20 @@
         });
         dualSelectBox.elements.removeAllButton.on("click", function () {
             removeAll(dualSelectBox);
+        });
+        dualSelectBox.elements.filterInput1.on("change keyup", function () {
+            filter(dualSelectBox, 1);
+        });
+        dualSelectBox.elements.filterInput2.on("change keyup", function () {
+            filter(dualSelectBox, 2);
         })
     }
 
     DoubleSelectBox.prototype = {
+        /**
+         * 初始化
+         * @returns {*|HTMLElement}
+         */
         init: function () {
             this.container = $("" +
                 '<div class="row p-container">' +
@@ -141,7 +237,14 @@
             this.element.hide();
             bindEvents(this);
             return this.element;
-        }, setShowFilterInputs: function (value, refresh) {
+        },
+        /**
+         * 设置过滤框
+         * @param value
+         * @param refresh
+         * @returns {*|HTMLElement}
+         */
+        setShowFilterInputs: function (value, refresh) {
             if (!value) {
                 this.elements.filterInput.hide();
             } else {
@@ -151,7 +254,12 @@
             if (refresh) {
                 refreshSelects(this);
             }
-        }, refresh: function () {
+            return this.element;
+        },
+        /**
+         * 刷新
+         */
+        refresh: function () {
             updateSelectionStates(this);
             refreshSelects(this);
         }
